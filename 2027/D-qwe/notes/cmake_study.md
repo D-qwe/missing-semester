@@ -1,4 +1,4 @@
-# 27赛季控制视觉招新培训第二课学习笔记：cmake与catkin大模型使用入门
+# 27赛季控制视觉招新培训第二课学习笔记：cmake与catkin,大模型使用入门
 
 ## 一.CMake基础
 （笔记资料来自：https://www.runoob.com/cmake/cmake-basic.html）
@@ -89,6 +89,209 @@
   `cmake --install .`
   （把编译好的可执行文件等复制到系统指定的目录）
 
+#### (3).个人实战
+
+##### 1.从零开始的打开hello_cmake
+1. 在掌握了基本语法后，我先是在主文件夹新建一个cmake_demo的文件夹。
+2. 然后在VScode里面打开此文件夹，并新建一个CMakeLists.txt文件，并输入以下代码：
+```cmake
+# 规定项目所需的最低 CMake 版本
+cmake_minimum_required(VERSION 3.10)
+# 定义项目名称
+project(MyRobot)
+# 编译并产生可执行程序
+add_executable(my_app main.cpp)
+```
+3. 然后是在出现的main.cpp文件中输入:
+```cpp
+#include <iostream>
+int main() {
+    std::cout << "Hello CMake!" << std::endl;
+    return 0;
+}
+```
+4. 然后是新打开一个终端，在终端中依次输入：
+```bash
+# 1. 生成构建文件（指定源码目录为当前，构建目录为 build）
+cmake -S . -B build
+
+# 2. 执行编译（指定 build 目录）
+cmake --build build
+
+# 3. 运行生成的可执行文件
+./build/my_app
+
+**终端输出反馈**
+
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_demo/build
+[ 50%] Building CXX object CMakeFiles/my_app.dir/main.cpp.o
+[100%] Linking CXX executable my_app
+[100%] Built target my_app
+Hello CMake!
+```
+
+##### 2.静态库的生成与链接检验
+1. 在主文件夹新建一个cmake_advanced文件夹。
+2. VScode中在此文件夹里面依次新建，
+
+- **library.h**,头文件
+
+- **library.cpp**,源文件
+
+- **main.cpp**,主文件
+
+- **CMakeLists.txt**,图纸
+3. 在**library.h**中输入：
+```
+#pragma once
+void print_library_message();
+# 告诉别人：“我这里有一个叫 print_library_message 的函数”。主程序 main.cpp 只要 #include "library.h"，就知道这个函数是存在的
+```
+4. 在**library.cpp**中输入：
+```cpp
+#include <iostream>
+#include "library.h"
+void print_library_message() {
+    std::cout << "This message is from the static library!" << std::endl;
+}
+//这是用来真正实现头文件里面所承诺的那个函数
+```
+5. 在**main.cpp**中输入：
+```cpp
+#include <iostream>
+#include "library.h"
+int main() {
+    std::cout << "Hello from main app!" << std::endl;
+    print_library_message();
+    return 0;
+}
+//最终运行程序
+```
+6. 在 **CMakeLists.txt**中输入：
+```cmake
+# 规定项目所需的最低 CMake 版本
+cmake_minimum_required(VERSION 3.10)
+# 定义项目名称
+project(AdvancedDemo)
+# 告诉CMake，把library.cpp打包成一个名字叫MyLib的独立工具包
+add_library(MyLib STATIC library.cpp)
+# 把main.cpp编译成一个最终程序
+add_executable(MyApp main.cpp)
+# 告诉用户，头文件放在哪个文件夹里面
+target_include_directories(MyApp PRIVATE ${PROJECT_SOURCE_DIR})
+# 告诉CMake，最后要把静态库和主程序连接起来
+target_link_libraries(MyApp PRIVATE MyLib)
+```
+7. 然后是新打开一个终端，在终端中依次输入：
+```bash
+# 1. 生成构建文件（指定源码目录为当前，构建目录为 build）
+cmake -S . -B build
+
+# 2. 执行编译（指定 build 目录）
+cmake --build build
+
+# 3. 运行生成的可执行文件
+./build/MyApp
+
+**终端输出反馈**
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_advanced/build
+[ 25%] Building CXX object CMakeFiles/MyLib.dir/library.cpp.o
+[ 50%] Linking CXX static library libMyLib.a
+[ 50%] Built target MyLib
+[ 75%] Building CXX object CMakeFiles/MyApp.dir/main.cpp.o
+[100%] Linking CXX executable MyApp
+[100%] Built target MyApp
+
+./build/MyApp
+Hello from main app!
+This message is from the static library!
+```
+
+##### 3.一个综合实操
+1. 在主文件夹新建cmake_simple_test文件夹
+
+2. VScode中在此文件夹里面依次新建，
+
+- **utils.cpp**
+
+- **core.cpp**
+
+- **helper.cpp**
+
+- **main.cpp**
+
+- **CMakeLists.txt**
+
+3. 在core.cpp中填入：
+```cpp
+#include <iostream>
+void core_function() { std::cout << "Core function called." << std::endl; }
+```
+
+4. 在helper.cpp中填入：
+```cpp
+#include <iostream>
+void helper_function() { std::cout << "Helper function called." << std::endl; }
+```
+
+5. 在utils.cpp中填入：
+```cpp
+#include <iostream>
+void utils_function() { std::cout << "Utils function called." << std::endl; }
+```
+6. 在main.cpp中写入：
+```cpp
+#include <iostream>
+void core_function();
+void helper_function();
+void utils_function();
+
+int main() {
+    std::cout << "Main app started." << std::endl;
+    core_function();
+    helper_function();
+    utils_function();
+    return 0;
+}
+```
+
+7.在CMakeLists.txt中写入：
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(MyProject VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 生成静态库，使用当前目录下的源文件
+add_library(MyLib STATIC core.cpp helper.cpp)
+
+# 生成可执行文件
+add_executable(MyApp main.cpp utils.cpp)
+
+# 因为大家平级，头文件路径就是当前目录
+target_include_directories(MyApp PRIVATE ${PROJECT_SOURCE_DIR})
+
+target_link_libraries(MyApp PRIVATE MyLib)
+
+# 安装规则
+install(TARGETS MyApp RUNTIME DESTINATION bin)
+install(TARGETS MyLib ARCHIVE DESTINATION lib)
+
+```
+
+8. 在终端运行后会得到：
+```bash
+Main app started.
+Core function called.
+Helper function called.
+Utils function called.
+jiecheng@jiecheng-Legion-Y
+```
 
 ### 2.变量与缓存
 CMake 使用变量来存储和传递配置信息，变量可以在 CMakeLists.txt 中定义和使用。
@@ -119,6 +322,59 @@ CMake 使用变量来存储和传递配置信息，变量可以在 CMakeLists.tx
 `foreach(FILE ${SOURCE_FILES})`
     `message(STATUS "源文件: ${FILE}")`
 `endforeach()`
+
+**比如**：把前文中**3.一个综合实操**中CMakeLists.txt的内容改成：
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(MyProject VERSION 1.0.0 LANGUAGES CXX)
+
+# 1. 定义一个字符串变量（相当于给项目起了个内部小名）
+set(MY_APP_NAME "super-app")
+
+# 2. 定义一个列表变量（把咱们那几个源文件打包进一个盒子里）
+set(SOURCE_FILES core.cpp helper.cpp utils.cpp)
+
+# 3. 生成可执行文件（直接引用变量！）
+# 注意：这里我们不用再一个个敲文件名，而是直接写 ${SOURCE_FILES}
+add_executable(${MY_APP_NAME} main.cpp ${SOURCE_FILES})
+
+# 4. 打印信息，验证变量是否生效
+message(STATUS "=====================================")
+message(STATUS "项目实际生成的名字是: ${MY_APP_NAME}")
+message(STATUS "我打包的源文件有: ${SOURCE_FILES}")
+
+# 5. 用 foreach 循环，把盒子里的文件一个个拿出来打印
+foreach(FILE ${SOURCE_FILES})
+    message(STATUS "正在准备编译文件: ${FILE}")
+endforeach()
+```
+终端运行后可以得到：
+```bash
+-- =====================================
+-- 项目实际生成的名字是: super-app
+-- 我打包的源文件有: core.cpp;helper.cpp;utils.cpp
+-- 正在准备编译文件: core.cpp
+-- 正在准备编译文件: helper.cpp
+-- 正在准备编译文件: utils.cpp
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_simple_test/build
+```
+**🐳 deepseek 解读：**
+
+1. 从“写死”到“灵活”（解决了牵一发而动全身的问题）
+
+· 之前（没有变量）：您在 add_executable(MyApp main.cpp core.cpp helper.cpp) 里，把文件名一个个敲死了。如果有一天，您的代码多了一个 sensor.cpp，您得手动去括号里加上它。如果项目里有 50 个文件，改起来简直是灾难。
+· 现在（使用变量）：您把文件装进了 SOURCE_FILES 这个“大盒子”里。以后加文件，只要在 set 那一行往里扔就行。add_executable 那句代码永远不需要改。这就叫解耦。
+
+2. 彻底避免了“拼写错误”
+
+· 之前：项目名 MyApp 您可能在第 10 行敲对了，在第 50 行写成了 MyAPP，系统就会报错找不到目标。
+· 现在：只要定义一次 MY_APP_NAME，后面全用 ${MY_APP_NAME} 引用。哪怕您闭着眼睛复制粘贴，也绝不会拼错。
+
+3. foreach 循环让代码“活”了起来
+
+· 截图里的 foreach 循环，是 C++ 程序员在 CMake 里最爱用的神器。它意味着您不仅能存变量，还能批量处理它们。比如以后您想把所有文件都加上特定的编译选项，用 foreach 遍历一遍变量就行，省去了大量机械劳动。
 
 #### (2).缓存变量
 缓存变量存储在 CMakeCache.txt 文件中，在多次 CMake 运行之间保持值不变。
@@ -151,13 +407,114 @@ CMake 使用变量来存储和传递配置信息，变量可以在 CMakeLists.tx
    在 cmake 命令中通过 -D 修改缓存变量
    > $ cmake .. -DMY_INSTALL_PATH=/opt/runoob -DENABLE_LOGGING=OFF
 
+**比如**还是把前文中的**3.一个综合实操**中CMakeLists.txt的内容改成：
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(MyProject VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ==========================================
+# 第一部分：普通变量验证
+# ==========================================
+set(MY_APP_NAME "super-app")
+set(SOURCE_FILES core.cpp helper.cpp utils.cpp)
+
+# ==========================================
+# 第二部分：缓存变量验证
+# ==========================================
+# CACHE BOOL 表示这是一个布尔值开关，ON 是默认值
+set(ENABLE_DEBUG_MODE ON CACHE BOOL "是否开启调试模式")
+
+# 使用 if 条件语句判断缓存变量
+if(ENABLE_DEBUG_MODE)
+    message(STATUS "【配置提示】当前为 Debug 调试模式，正在开启优化...")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+else()
+    message(STATUS "【配置提示】当前为 Release 模式，性能拉满。")
+endif()
+
+# ==========================================
+# 第三部分：生成目标与安装规则
+# ==========================================
+add_library(MyLib STATIC core.cpp helper.cpp)
+add_executable(${MY_APP_NAME} main.cpp utils.cpp)
+
+target_include_directories(${MY_APP_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(${MY_APP_NAME} PRIVATE MyLib)
+
+# 打印普通变量，验证 foreach 循环
+message(STATUS "----- 变量解析结果 -----")
+message(STATUS "项目名称: ${MY_APP_NAME}")
+foreach(FILE ${SOURCE_FILES})
+    message(STATUS "需要编译的源文件: ${FILE}")
+endforeach()
+
+# 安装规则：设置安装路径
+install(TARGETS ${MY_APP_NAME} RUNTIME DESTINATION bin)
+install(TARGETS MyLib ARCHIVE DESTINATION lib)
+```
+终端运行后可以得到：
+```bash
+jiecheng@jiecheng-Legion-Y7000-IRX10:~/cmake_simple_test$ cmake -S .-B build
+-- 【配置提示】当前为 Debug 调试模式，正在开启优化...
+-- ----- 变量解析结果 -----
+-- 项目名称: super-app
+-- 需要编译的源文件: core.cpp
+-- 需要编译的源文件: helper.cpp
+-- 需要编译的源文件: utils.cpp
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_simple_test/build
+jiecheng@jiecheng-Legion-Y7000-IRX10:~/cmake_simple_test$ cmake -S . -B build -DENABLE_DEBUG_MODE=OFF
+-- 【配置提示】当前为 Release 模式，性能拉满。
+-- ----- 变量解析结果 -----
+-- 项目名称: super-app
+-- 需要编译的源文件: core.cpp
+-- 需要编译的源文件: helper.cpp
+-- 需要编译的源文件: utils.cpp
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_simple_test/build
+jiecheng@jiecheng-Legion-Y7000-IRX10:~/cmake_simple_test$ cmake --build build
+[ 16%] Building CXX object CMakeFiles/MyLib.dir/core.cpp.o
+[ 33%] Building CXX object CMakeFiles/MyLib.dir/helper.cpp.o
+[ 50%] Linking CXX static library libMyLib.a
+[ 50%] Built target MyLib
+[ 66%] Building CXX object CMakeFiles/super-app.dir/main.cpp.o
+[ 83%] Building CXX object CMakeFiles/super-app.dir/utils.cpp.o
+[100%] Linking CXX executable super-app
+[100%] Built target super-app
+```
+**deepseek解读：**
+这次实操的核心成果，可以总结为以下四点，直接切中要害：
+
+1. 成功分离了“内存数据”与“磁盘数据”
+
+· 普通变量（MY_APP_NAME）存在内存里，用完就清空。它的价值在于一次定义，多处引用，最终将可执行文件名成功变成了 super-app。
+· 缓存变量（ENABLE_DEBUG_MODE）被写入了 CMakeCache.txt 磁盘文件中，具有持久化特性。
+
+2. 验证了 if 条件判断的“配置分流”作用
+
+· 通过读取缓存变量的值，CMake 自动选择了不同的构建策略（Debug 或 Release），并向编译器传递了不同的编译标志（如 -g）。
+
+3. 验证了缓存变量的“外部控制权”
+
+· 第二次在终端输入 -DENABLE_DEBUG_MODE=OFF 时，没有修改一行代码，直接覆盖了配置文件中的默认值。这证明了用户可以通过命令行参数，直接改变构建配置。
+
+4. 跑通了完整的“生成-编译-链接-安装”流水线
+
+· 通过 foreach 循环遍历了源文件；通过 add_library 生成了 libMyLib.a；通过 target_link_libraries 完成了链接；并最终生成了名为 super-app 的可执行文件。
+
+
 ### 3.头文件搜索路径
 在 CMake 中，有两种方式可以指定编译器查找头文件的路径：include_directories() 和 target_include_directories()。两者都可以为编译器添加头文件搜索路径，但作用范围和控制粒度不同。
 
 **deepseek解读：**
 在过去，我们常用 `include_directories()`，但现代 CMake 强烈推荐使用 `target_include_directories()`。
 
-#### 两种头文件搜索路径的对比
+#### 1.两种头文件搜索路径的对比
 - **(1).作用范围**
   - `include_directories()`：全局作用域，会影响当前目录及子目录中的**所有目标**。
   - `target_include_directories()`：仅作用于**指定的目标**，不会污染其他目标。
@@ -179,7 +536,7 @@ CMake 使用变量来存储和传递配置信息，变量可以在 CMakeLists.tx
   - `target_include_directories()`：通过 `PUBLIC`、`PRIVATE`、`INTERFACE` 精确控制。
 
 
-#### 可见性关键字的含义 (`PUBLIC` / `PRIVATE` / `INTERFACE`)
+#### 2.可见性关键字的含义 (`PUBLIC` / `PRIVATE` / `INTERFACE`)
   注：`target_include_directories()` 的最大优势，就是能精确控制头文件路径的“传播”（谁能用，谁不能用）。
 
 | 关键字 | 当前目标可用 | 依赖此目标的其他目标可用 | 典型场景 |
@@ -193,6 +550,56 @@ CMake 使用变量来存储和传递配置信息，变量可以在 CMakeLists.tx
 
 现在的 `target_include_directories()` 就像给指定的人发微信，并设置了“仅自己可见”、“公开”或“仅对方可见”。
 
+#### 3.实操
+1. 主文件夹中新建文件夹
+
+2. 新建lib.h公共库头文件文件，并输入：
+```cpp
+#pragma once
+void print_public();
+```
+
+3. 新建lib.cpp公共库源文件，并输入：
+```cpp
+ #include "lib.h"
+#include <iostream>
+void print_public() {std::cout<<"PUBLIC 库被调用了"<<std::endl;}
+```
+
+4. 新建main.cpp主程序：
+```cpp
+#include <iostream>
+#include "lib.h"
+int main(){
+    print_public();
+    return 0;
+}
+```
+
+CMakeLists.txt中输入：
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(Test)
+add_library(MyLib lib.cpp)
+target_include_directories(MyLib PUBLIC ${PROJECT_SOURCE_DIR})
+add_executable(MyApp main.cpp)
+target_link_libraries(MyApp PRIVATE MyLib)
+```
+终端运行后可以得到：
+```bash
+jiecheng@jiecheng-Legion-Y7000-IRX10:~/cmake_test$ cmake -S . -B build
+cmake --build build
+./build/MyApp
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jiecheng/cmake_test/build
+[ 50%] Built target MyLib
+[ 75%] Building CXX object CMakeFiles/MyApp.dir/main.cpp.o
+[100%] Linking CXX executable MyApp
+[100%] Built target MyApp
+PUBLIC 库被调用了
+```
+通过这里我们就可以看到，`target_include_directories(MyLib PUBLIC ${PROJECT_SOURCE_DIR})`这行指令能让MyLib库中的源文件能成功找到头文件，并自动把这个路径“传染”给了链接它的主程序 MyApp，因此，main.cpp 中无需额外配置路径。运行后便得到**PUBLIC 库被调用了**这一结果，而这一结果我们是在lib.cpp公共库源文件里面写好了的。
 
 ### 4.查找库和包
 很多项目依赖外部库（如 Boost、OpenCV），CMake 提供了 find_package() 指令来自动检测和配置这些外部依赖。
@@ -481,6 +888,33 @@ GCC 编译器驱动程序读取源程序 `hello.c`，将其翻译为可执行目
 
 **这一句后的系统会反馈：**`/root/catkin_ws/src:/opt/ros/noetic/share`
 
+**完整终端流程：**
+```bash
+jiecheng@jiecheng-Legion-Y7000-IRX10:~$ sudo docker start 91a4707596b1
+sudo docker exec -it 91a4707596b1 bash
+[sudo: authenticate] 密码：          
+91a4707596b1
+root@91a4707596b1:/# source /opt/ros/noetic/setup.bash
+root@91a4707596b1:/# mkdir -p ~/catkin_ws/src
+root@91a4707596b1:/# cd ~/catkin_ws/
+root@91a4707596b1:~/catkin_ws# catkin_make
+Base path: /root/catkin_ws
+Source space: /root/catkin_ws/src
+Build space: /root/catkin_ws/build
+Devel space: /root/catkin_ws/devel
+Install space: /root/catkin_ws/install
+####
+#### Running command: "make cmake_check_build_system" in "/root/catkin_ws/build"
+####
+####
+#### Running command: "make -j24 -l24" in "/root/catkin_ws/build"
+####
+root@91a4707596b1:~/catkin_ws# source devel/setup.bash
+root@91a4707596b1:~/catkin_ws# echo $ROS_PACKAGE_PATH
+/root/catkin_ws/src:/opt/ros/noetic/share
+root@91a4707596b1:~/catkin_ws# 
+```
+
 ### (2).Creating a ROS Package(创建一个ROS包)
 
 1. 首先，切换到创建的 catkin 工作空间的源代码（source）空间目录：
@@ -512,6 +946,17 @@ GCC 编译器驱动程序读取源程序 `hello.c`，将其翻译为可执行目
 7. rospack可以递归确定所有嵌套的依赖项：
 
 `rospack depends beginner_tutorials`
+
+**注释**
+`rospack depends1 beginner_tutorials`之后会得到：
+```
+roscpp
+rosgraph
+rosgraph_msgs
+roslib
+std_msgs
+```
+
 
 ### (3).Building and using catkin packages in a workspace(在工作空间中构建和使用catkin包)
 
@@ -545,7 +990,61 @@ GCC 编译器驱动程序读取源程序 `hello.c`，将其翻译为可执行目
 
 `catkin_make -DCMAKE_VERBOSE_MAKEFILE=ON`
 
+**终端最后输出：**(作节选)
+```bash
+Base path: /root/catkin_ws
+Source space: /root/catkin_ws/src
+Build space: /root/catkin_ws/build
+Devel space: /root/catkin_ws/devel
+Install space: /root/catkin_ws/install
+####
+#### Running command: "cmake /root/catkin_ws/src -DCMAKE_VERBOSE_MAKEFILE=ON -DCATKIN_DEVEL_PREFIX=/root/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/root/catkin_ws/install -G Unix Makefiles" in "/root/catkin_ws/build"
+####
+-- Using CATKIN_DEVEL_PREFIX: /root/catkin_ws/devel
+-- Using CMAKE_PREFIX_PATH: /root/catkin_ws/devel;/opt/ros/noetic
+-- This workspace overlays: /root/catkin_ws/devel;/opt/ros/noetic
+-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
+-- Using PYTHON_EXECUTABLE: /usr/bin/python3
+-- Using Debian Python package layout
+-- Using empy: /usr/lib/python3/dist-packages/em.py
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /root/catkin_ws/build/test_results
+-- Forcing gtest/gmock from source, though one was otherwise available.
+-- Found gtest sources under '/usr/src/googletest': gtests will be built
+-- Found gmock sources under '/usr/src/googletest': gmock will be built
+-- Found PythonInterp: /usr/bin/python3 (found version "3.8.10") 
+-- Using Python nosetests: /usr/bin/nosetests3
+-- catkin 0.8.12
+-- BUILD_SHARED_LIBS is on
+-- BUILD_SHARED_LIBS is on
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 2 packages in topological order:
+-- ~~  - beginner_tutorials
+-- ~~  - my_first_pkg
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- +++ processing catkin package: 'beginner_tutorials'
+-- ==> add_subdirectory(beginner_tutorials)
+-- +++ processing catkin package: 'my_first_pkg'
+-- ==> add_subdirectory(my_first_pkg)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /root/catkin_ws/build
+####
+#### Running command: "make -j24 -l24" in "/root/catkin_ws/build"
+####
+/usr/bin/cmake -S/root/catkin_ws/src -B/root/catkin_ws/build --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/cmake -E cmake_progress_start /root/catkin_ws/build/CMakeFiles /root/catkin_ws/build/CMakeFiles/progress.marks
+make -f CMakeFiles/Makefile2 all
+make[1]: Entering directory '/root/catkin_ws/build'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/root/catkin_ws/build'
+/usr/bin/cmake -E cmake_progress_start /root/catkin_ws/build/CMakeFiles 0
+```
+
 ###  (4).Overlaying with catkin workspaces(使用catkin工作空间进行叠加)
+**deepseek解读**
+这部分是 Overlay（工作空间叠加），属于 ROS 高阶操作。它的核心目的是：在系统原有的 ROS 之上，再叠加一层您自己写的代码层。 当您调用某个包时，系统会优先使用您叠加层里的版本。
 
 1. 安装ROS包（此处省略）
 
@@ -614,23 +1113,149 @@ GCC 编译器驱动程序读取源程序 `hello.c`，将其翻译为可执行目
 
 `pwd`
 
+**终端交互流程：**
+```bash
+root@91a4707596b1:~/catkin_ws# mkdir -p ~/overlay_ws/src
+root@91a4707596b1:~/catkin_ws# cd ~/overlay_ws/src
+root@91a4707596b1:~/overlay_ws/src# git clone https://github.com/ros/ros_tutorials.git
+Cloning into 'ros_tutorials'...
+remote: Enumerating objects: 3506, done.
+remote: Counting objects: 100% (204/204), done.
+remote: Compressing objects: 100% (78/78), done.
+remote: Total 3506 (delta 162), reused 126 (delta 126), pack-reused 3302 (from 3)
+Receiving objects: 100% (3506/3506), 802.84 KiB | 486.00 KiB/s, done.
+Resolving deltas: 100% (2110/2110), done.
+root@91a4707596b1:~/overlay_ws/src# cd ~/overlay_ws/
+root@91a4707596b1:~/overlay_ws# catkin_make
+Base path: /root/overlay_ws
+Source space: /root/overlay_ws/src
+Build space: /root/overlay_ws/build
+Devel space: /root/overlay_ws/devel
+Install space: /root/overlay_ws/install
+Creating symlink "/root/overlay_ws/src/CMakeLists.txt" pointing to "/opt/ros/noetic/share/catkin/cmake/toplevel.cmake"
+####
+#### Running command: "cmake /root/overlay_ws/src -DCATKIN_DEVEL_PREFIX=/root/overlay_ws/devel -DCMAKE_INSTALL_PREFIX=/root/overlay_ws/install -G Unix Makefiles" in "/root/overlay_ws/build"
+####
+-- The C compiler identification is GNU 9.4.0
+-- The CXX compiler identification is GNU 9.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Using CATKIN_DEVEL_PREFIX: /root/overlay_ws/devel
+-- Using CMAKE_PREFIX_PATH: /root/catkin_ws/devel;/opt/ros/noetic
+-- This workspace overlays: /root/catkin_ws/devel;/opt/ros/noetic
+-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
+-- Using PYTHON_EXECUTABLE: /usr/bin/python3
+-- Using Debian Python package layout
+-- Found PY_em: /usr/lib/python3/dist-packages/em.py  
+-- Using empy: /usr/lib/python3/dist-packages/em.py
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /root/overlay_ws/build/test_results
+-- Forcing gtest/gmock from source, though one was otherwise available.
+-- Found gtest sources under '/usr/src/googletest': gtests will be built
+-- Found gmock sources under '/usr/src/googletest': gmock will be built
+-- Found PythonInterp: /usr/bin/python3 (found version "3.8.10") 
+-- Found Threads: TRUE  
+-- Using Python nosetests: /usr/bin/nosetests3
+-- catkin 0.8.12
+-- BUILD_SHARED_LIBS is on
+-- BUILD_SHARED_LIBS is on
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 2 packages in topological order:
+-- ~~  - turtlesim_msgs (plain cmake)
+-- ~~  - turtlesim (plain cmake)
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CMake Error at /opt/ros/noetic/share/catkin/cmake/catkin_workspace.cmake:100 (message):
+  This workspace contains non-catkin packages in it, and catkin cannot build
+  a non-homogeneous workspace without isolation.  Try the
+  'catkin_make_isolated' command instead.
+Call Stack (most recent call first):
+  CMakeLists.txt:69 (catkin_workspace)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/root/overlay_ws/build/CMakeFiles/CMakeOutput.log".
+See also "/root/overlay_ws/build/CMakeFiles/CMakeError.log".
+Invoking "cmake" failed
+root@91a4707596b1:~/overlay_ws# rm -rf ~/overlay_ws/src/ros_tutorials
+root@91a4707596b1:~/overlay_ws# cp -r ~/catkin_ws/src/beginner_tutorials ~/overlay_ws/src/
+root@91a4707596b1:~/overlay_ws# cd ~/overlay_ws
+root@91a4707596b1:~/overlay_ws# catkin_make
+Base path: /root/overlay_ws
+Source space: /root/overlay_ws/src
+Build space: /root/overlay_ws/build
+Devel space: /root/overlay_ws/devel
+Install space: /root/overlay_ws/install
+####
+#### Running command: "cmake /root/overlay_ws/src -DCATKIN_DEVEL_PREFIX=/root/overlay_ws/devel -DCMAKE_INSTALL_PREFIX=/root/overlay_ws/install -G Unix Makefiles" in "/root/overlay_ws/build"
+####
+-- Using CATKIN_DEVEL_PREFIX: /root/overlay_ws/devel
+-- Using CMAKE_PREFIX_PATH: /root/catkin_ws/devel;/opt/ros/noetic
+-- This workspace overlays: /root/catkin_ws/devel;/opt/ros/noetic
+-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
+-- Using PYTHON_EXECUTABLE: /usr/bin/python3
+-- Using Debian Python package layout
+-- Using empy: /usr/lib/python3/dist-packages/em.py
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /root/overlay_ws/build/test_results
+-- Forcing gtest/gmock from source, though one was otherwise available.
+-- Found gtest sources under '/usr/src/googletest': gtests will be built
+-- Found gmock sources under '/usr/src/googletest': gmock will be built
+-- Found PythonInterp: /usr/bin/python3 (found version "3.8.10") 
+-- Using Python nosetests: /usr/bin/nosetests3
+-- catkin 0.8.12
+-- BUILD_SHARED_LIBS is on
+-- BUILD_SHARED_LIBS is on
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 1 packages in topological order:
+-- ~~  - beginner_tutorials
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- +++ processing catkin package: 'beginner_tutorials'
+-- ==> add_subdirectory(beginner_tutorials)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /root/overlay_ws/build
+####
+#### Running command: "make -j24 -l24" in "/root/overlay_ws/build"
+####
+root@91a4707596b1:~/overlay_ws# source devel/setup.bash
+root@91a4707596b1:~/overlay_ws# roscd beginner_tutorials
+root@91a4707596b1:~/overlay_ws/src/beginner_tutorials# pwd
+/root/overlay_ws/src/beginner_tutorials
+```
+**注释**：其中，因为我们所拉取的ros_tutorials源码库，里面包含了一些早期 ROS 1 时代遗留的纯 CMake 包（如 turtlesim_msgs）。catkin_make 不允许混合编译纯 CMake 包和 Catkin 包，所以它直接报错。为此，通过询问deepseek，通过建设自己的纯净包来替代完成测试。
+
 ## 4.如何用200行代码编码克劳德密码
+（笔记资料来自：https://www.mihaileric.com/The-Emperor-Has-No-Clothes/，这确实是一篇很好的文章，我还得多读几遍）
 
 人工智能编程助手会读取文件、编辑项目并编写函数式代码。，能支持这种能力，大概需要200行简单的Python。
 
-### （1）理解使用编码代理时的实际流程
+### (1).理解使用编码代理时的实际流程
 1. YOU发送消息(“创建一个具有 hello world 函数的新文件”)
 2. The LLMLLM 决定需要一个工具,并通过结构化工具调用(或多个工具调用)进行响应
 3. Your program您的程序在本地执行该工具调用(实际上创建文件)
 4. The result结果会被退回到LLM
 5. The LLM 会利用该上下文来继续或回应
 
-### （2）需要的三种工具
+### (2).需要的三种工具
 1. 读取文件,以便 LLM 能够查看您的代码
 2. 列出文件,以便其能够浏览您的项目
 3. 编辑文件,以便其提供创建和修改代码的指令
 
-### （3）个人思考
+- （三种工具足以完成令人惊叹的事情！）
+
+### (3).个人思考
 从中可见，AI助手=LLM+工具箱+循环；
 其运转机制：“请求-执行-反馈”的完美闭环（The Loop）
 
@@ -655,13 +1280,127 @@ AI 帮我们写代码，其实就是一个 5 步的循环：
 
 > 通过把 Python 函数的注释（docstrings）提取出来拼成提示词（Prompt），大模型自己就能看懂这些工具是干嘛用的，并在什么时候该用它们。
 
-> 大模型的理解能力，就是整个系统的灵魂。
+> 大模型的理解能力，就是整个系统的灵魂。（灵魂！！！）
+
+### (4).在终端上的实操
+deepseek的指导下完成了以下实操：
+```bash
+root@91a4707596b1:~# cat << 'EOF' > full_agent.py
+> import json
+> import os
+> # 读
+> def read_file_tool(filename):
+>     try:
+>         with open(filename, 'r', encoding='utf-8') as f:
+>             return {"file_path": filename, "content": f.read()}
+>     except Exception as e:
+>         return {"error": str(e)}
+> # 列
+> def list_files_tool(path="."):
+>     try:
+>         files = [{"filename": f, "type": "file" if os.path.isfile(os.path.join(path, f)) else "dir"} for f in os.listdir(path)]
+>         return {"path": path, "files": files}
+>     except Exception as e:
+>         return {"error": str(e)}
+> # 按名称查找工具的方法:
+> TOOL_REGISTRY = {
+>     "read_file": read_file_tool,
+>     "list_files": list_files_tool
+> }
+> 
+> #  真正严谨的模拟大模型逻辑
+> def mock_llm_call(conversation):
+>     # 把历史对话全拼成一个大字符串，方便查找
+>     history_text = " ".join([msg["content"] for msg in conversation])
+>     
+>     # 如果历史记录里既没有 list_files，也没有 file_path，那就是刚开始
+>     if "list_files" not in history_text and "file_path" not in history_text:
+>         return 'tool: list_files({"path": "."})'
+>     
+>     # 如果有了 list_files，但没有 file_path，说明看完了目录，要去读文件
+>     elif "list_files" in history_text and "file_path" not in history_text:
+>         return 'tool: read_file({"filename": "test.txt"})'
+>     
+>     # 如果 file_path 都出来了，说明彻底读完了
+>     else:
+>         return "我已经帮您读取完 test.txt 了，任务结束！"
+> 
+> def extract_tool_invocations(text):
+>     invocations = []
+>     for line in text.splitlines():
+>         line = line.strip()
+>         if not line.startswith("tool:"): continue
+>         try:
+>             after = line[len("tool:"):].strip()
+>             name, rest = after.split("(", 1)
+>             args = json.loads(rest[:-1])
+>             invocations.append((name.strip(), args))
+>         except Exception:
+>             pass
+>     return invocations
+> 
+> def run_agent_loop():
+>     print("--- 启动本地 Agent ---")
+>     with open("test.txt", "w", encoding="utf-8") as f:
+>         f.write("Hello, Agent! 这是真实的文件内容。")
+>     
+>     conversation = [{"role": "user", "content": "请先查看当前目录的内容，然后帮我读取 test.txt"}]
+>     print(f"用户: {conversation[0]['content']}\n")
+>     
+>     step = 1
+>     while True:
+>         response = mock_llm_call(conversation)
+>         print(f"[第 {step} 轮] Assistant 决定: {response}")
+>         
+>         tool_invocations = extract_tool_invocations(response)
+>         if not tool_invocations:
+>             print("--- 任务结束，大模型未请求更多工具 ---")
+>             break
+>             
+>         for name, args in tool_invocations:
+>             print(f"  [本地执行] 调用工具 {name}")
+>             tool_result = TOOL_REGISTRY[name](**args)
+>             print(f"  [工具结果] 成功获取数据")
+>             
+>             # 必须把 AI 的原始回复和工具的执行结果追加到历史中
+>             conversation.append({"role": "assistant", "content": response})
+>             conversation.append({"role": "user", "content": f"tool_result({json.dumps(tool_result, ensure_ascii=False)})"})
+>         print("-" * 40)
+>         step += 1
+> 
+> if __name__ == "__main__":
+>     run_agent_loop()
+> EOF
+root@91a4707596b1:~# python3 full_agent.py
+--- 启动本地 Agent ---
+用户: 请先查看当前目录的内容，然后帮我读取 test.txt
+
+[第 1 轮] Assistant 决定: tool: list_files({"path": "."})
+  [本地执行] 调用工具 list_files
+  [工具结果] 成功获取数据
+----------------------------------------
+[第 2 轮] Assistant 决定: tool: read_file({"filename": "test.txt"})
+  [本地执行] 调用工具 read_file
+  [工具结果] 成功获取数据
+----------------------------------------
+[第 3 轮] Assistant 决定: 我已经帮您读取完 test.txt 了，任务结束！
+--- 任务结束，大模型未请求更多工具 ---
+
+```
+**注**：根据deepseek的说法，对于这个简易的agent,可以通过以下步骤实现真正的agent功能：
+1. **决策层**：从硬编码的 `if-else` 判断，升级为真实的 LLM API 调用，赋予了系统真正的自然语言理解能力。
+2. **解析层**：废弃了容易出 Bug 的字符串切割，改用大模型原生的 `tools` 参数和结构化 JSON 返回（`tool_calls`），实现了更稳定的工具调度。
+3. **交互层**：从单次固定任务，升级为带记忆的多轮对话循环。AI 能够在真实的对话中，根据需要自主决定调用哪个本地工具。
+写在最后，记住：
+**这基本上只是与一个拥有工具箱的强大LLM的对话。**
 
 ## 5.个人使用大模型的思考
 
 现在 AI 发展迅速，这是一个属于人工智能的时代。大模型已经成为我们不可或缺的强大工具，我们在工作和学习中都或多或少会使用到 DeepSeek、GPT 等 Agent。
 
-就拿我这次的学习来说，由于 CMake 和 Catkin 的相关资料繁多、阅读难度大、思维繁杂，我也多次使用大模型为我辅助。比如翻译外文资料、理解生涩的术语和概念，甚至在电脑终端上实操遇到报错时，也是大模型帮我排错解决的。
+就拿我这次的学习来说，由于 CMake 和 Catkin 的相关资料繁多、阅读难度大、思维繁杂，我也多次使用大模型为我辅助，比如翻译外文资料、理解生涩的术语和概念，甚至在电脑终端上实操遇到报错时，也是大模型帮我排错解决的。
+
+基本上我的学习模式就是，先学习文献知识，然后根据文献知识结合大模型的指导在电脑上完成实操，对于实操结果再结合大模型的解读进行理解和学习，最后整理成为笔记。
 
 可以说，在本次学习中大模型起到了至关重要的作用。正是它强大的工具能力，让我能更深入地理解和吸收文献知识，也让我对 CMake 和 Catkin 建立了一个初步的认识。
 
